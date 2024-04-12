@@ -1,0 +1,61 @@
+//Codigo Esp32
+
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+const char* ssid = "INFINITUM92B1_2.4"; // Nombre de tu red Wi-Fi
+const char* password = "RamirezMorelos41"; // Contraseña de tu red Wi-Fi
+const char* serverUrl = "http://192.168.1.74:3000/api/mediciones"; // URL de tu endpoint API para enviar mediciones
+
+const int baudRate = 9600;
+
+void setup() {
+  Serial.begin(baudRate);
+  Serial.println("Conectando a Wi-Fi...");
+  WiFi.begin(ssid, password);
+  
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Conectando a Wi-Fi...");
+  }
+  
+  Serial.println("Conectado a Wi-Fi");
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    String data = Serial.readStringUntil('\n');
+    // Verificar si el dato recibido comienza con "Irms:" y "P:"
+    if (data.startsWith("Irms:") && data.indexOf(",P:") != -1) {
+      // Analizar los datos recibidos
+      float Irms, P;
+      sscanf(data.c_str(), "Irms:%f,P:%f", &Irms, &P);
+      
+      // Crear objeto JSON
+      String jsonPayload = "{\"potencia\": ";
+      jsonPayload += P;
+      jsonPayload += ", \"corriente\": ";
+      jsonPayload += Irms;
+      jsonPayload += "}";
+      
+      // Enviar datos al servidor API
+      HTTPClient http;
+      http.begin(serverUrl);
+      http.addHeader("Content-Type", "application/json");
+      
+      int httpResponseCode = http.POST(jsonPayload);
+      if (httpResponseCode > 0) {
+        Serial.print("HTTP Response code: ");
+        Serial.println(httpResponseCode);
+      } else {
+        Serial.print("Error en la solicitud HTTP: ");
+        Serial.println(httpResponseCode);
+      }
+      
+      http.end();
+    }
+    else {
+      Serial.println("Datos incorrectos recibidos: " + data);
+    }
+  }
+}

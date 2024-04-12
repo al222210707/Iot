@@ -1,0 +1,43 @@
+//Arduino Uno
+
+float Sensibilidad = 0.66;
+float offset = 0.100;
+float Imax = 0;
+float Imin = 0;
+
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  float Ip = get_corriente();
+  float Irms = Ip * 0.707;
+  float P = Irms * 120.0;
+
+  // Enviar los datos de corriente y potencia al ESP32 a través de comunicación serial
+  Serial.print("Irms:");
+  Serial.print(Irms, 2);
+  Serial.print(",");
+  Serial.print("P:");
+  Serial.println(P, 2);
+
+  delay(1000); // Esperar un segundo antes de la próxima lectura
+}
+
+float get_corriente() {
+  float voltajeSensor;
+  float corriente = 0;
+  long tiempo = millis();
+  
+  Imax = 0; // Reinicia Imax e Imin en cada llamada a get_corriente()
+  Imin = 0;
+
+  while (millis() - tiempo < 200) {
+    voltajeSensor = analogRead(A0) * (5.0 / 1023.0);
+    corriente = 0.9 * corriente + 0.1 * ((voltajeSensor - 2.630) / Sensibilidad);
+    if (corriente > Imax) Imax = corriente;
+    if (corriente < Imin) Imin = corriente;
+  }
+  
+  return (((Imax - Imin) / 2) - offset);
+}
