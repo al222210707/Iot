@@ -1,7 +1,5 @@
 //Codigo Esp32
-
-#include <WiFi.h>
-#include <HTTPClient.h>
+//librerias necesarias 2 
 
 const char* ssid = "INFINITUM92B1_2.4"; // Nombre de tu red Wi-Fi
 const char* password = "RamirezMorelos41"; // Contraseña de tu red Wi-Fi
